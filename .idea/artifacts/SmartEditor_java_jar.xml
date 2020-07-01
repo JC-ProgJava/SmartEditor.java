@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="SmartEditor.java:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/SmartEditor_java_jar</output-path>
+    <root id="archive" name="SmartEditor.java.jar">
+      <element id="module-output" name="SmartEditor.java" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/src/pgslookandfeel-1.1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/src/JTattoo-1.6.13.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
