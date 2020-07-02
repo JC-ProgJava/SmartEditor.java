@@ -9,12 +9,12 @@ Installation:
   (Windows):
   
  
-     cd _directory of jar file_
-     java -jar SmartEditor.jar
+     cd -directory of jar file-
+     java -jar SmartEditor.java.jar
      
      
   (Mac/Linux):
   
   
-     cd _directory of jar file_
-     java -jar SmartEditor.jar
+     cd -directory of jar file-
+     java -jar SmartEditor.java.jar
