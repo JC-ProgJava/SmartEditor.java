@@ -5,7 +5,7 @@ Requirements:
   
 Installation:
   1. Get .jar file from: https://github.com/JC-ProgJava/SmartEditor.java/blob/master/SmartEditor.java/SmartEditor%20Runnable/SmartEditor.java.jar?raw=true
-  OR: MacOS -> https://github.com/JC-ProgJava/SmartEditor.java/blob/master/SmartEditor.app.zip?raw=true
+  OR: MacOS -> https://github.com/JC-ProgJava/SmartEditor.java/blob/master/SmartEditor.zip?raw=true
   2. Double-click on jar to run.
   
   If error occurs, please run from command prompt/terminal:
