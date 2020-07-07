@@ -28,4 +28,5 @@ Installation:
   (Mac) .App:
   
   
-     Double click on appliation to run, you can add application to your dock.
+     Double click and extract. To run, double click again.
+     You can add the application to your dock.
