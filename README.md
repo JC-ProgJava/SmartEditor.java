@@ -1,5 +1,6 @@
 # SmartEditor
 Public base of SmartEditor - a text editor built using Java.
+
 Requirements:
   Java 8+(1.8+).
   
