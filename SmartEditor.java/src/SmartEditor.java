@@ -13,15 +13,12 @@ import java.awt.event.WindowListener;
 import java.awt.print.PrinterException;
 import java.io.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Formatter;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 /*
- * VERSION: 1.1
+ * VERSION: 1.3
  * AUTHOR: JC-ProgJava
- * SPRINT-VERSION: 1.2
+ * SPRINT-VERSION: 1.6
  * LICENSE: CC0 1.0 Universal
  * */
 
@@ -36,6 +33,7 @@ public class SmartEditor {
     public static boolean autoSave = false;
     public static String path = System.getProperty("user.home") + File.separator + "SmartEditor" + File.separator + "Settings.txt";
     public static String createFolderPath = System.getProperty("user.home") + File.separator + "SmartEditor";
+    public static String fileDirectoryPath = "";
 
     public static void main(String[] args) {
         File folder = new File(createFolderPath);
@@ -108,30 +106,29 @@ class Frame {
             @Override
             public void windowClosing(WindowEvent e) {
                 if (isSaved) {
-                    System.exit(0);
+                    System.exit(1);
                 } else {
                     if(SmartEditor.autoSave){
                         saveFile(filename);
-                        System.exit(0);
+                        System.exit(1);
                     }else {
                         if (Objects.equals(filename, "Untitled.txt") && filepath.equals("")) {
                             saveFile(filename);
                         } else {
-                            //This is where a real application would save the file.
                             JDialog dialog = new JDialog();
                             dialog.setLayout(new GridLayout(2, 1));
                             JLabel lab = new JLabel("Do you want to save the file?");
                             JButton pleaseSave = new JButton("Save");
-                            pleaseSave.setDefaultCapable(true);
                             pleaseSave.addActionListener(e2 -> {
                                 saveFile(filename);
                                 dialog.setVisible(false);
+                                editorFrame.setVisible(true);
                             });
-                            JButton dontSave = new JButton("Don't Save");
-                            dontSave.addActionListener(e2 -> System.exit(0));
+                            JButton noSave = new JButton("Don't Save");
+                            noSave.addActionListener(e2 -> System.exit(0));
                             JPanel pane = new JPanel(new GridLayout(1, 2));
                             pane.add(pleaseSave);
-                            pane.add(dontSave);
+                            pane.add(noSave);
                             dialog.add(lab);
                             dialog.add(pane);
                             dialog.setSize(300, 200);
@@ -175,6 +172,7 @@ class Frame {
         JMenuItem newMenu = new JMenuItem("New");
         JMenuItem open = new JMenuItem("Open");
         JMenuItem save = new JMenuItem("Save");
+        JMenuItem rename = new JMenuItem("Rename");
         JMenuItem print = new JMenuItem("Print");
         JMenuItem exit = new JMenuItem("Exit");
         JMenuItem cut = new JMenuItem("Cut");
@@ -205,9 +203,9 @@ class Frame {
                 scrollP.setBackground(SmartEditor.showBackPick);
             });
 
-            JLabel autoSave = new JLabel("Autosave");
+            JLabel autoSave = new JLabel("Auto Save");
             JCheckBox autoSaveT = new JCheckBox();
-            autoSaveT.setSelected(false);
+            autoSaveT.setSelected(SmartEditor.autoSave);
             autoSaveT.addChangeListener(e12 -> {
                 if(autoSaveT.isSelected()){
                     SmartEditor.autoSave = true;
@@ -256,7 +254,7 @@ class Frame {
                 scrollP.setBackground(SmartEditor.showBackPick);
             });
 
-            JTabbedPane paner = new JTabbedPane();
+            JTabbedPane pane = new JTabbedPane();
             JPanel temp = new JPanel(new GridBagLayout());
             JPanel temp2 = new JPanel(new GridBagLayout());
             GridBagConstraints cd = new GridBagConstraints();
@@ -268,10 +266,10 @@ class Frame {
             cd.gridwidth = 4;
             temp.add(color, c);
             temp2.add(back, c);
-            paner.addTab("Font Color", temp);
-            paner.setMnemonicAt(0, KeyEvent.VK_1);
-            paner.addTab("Background Color", temp2);
-            paner.setMnemonicAt(1, KeyEvent.VK_2);
+            pane.addTab("Font Color", temp);
+            pane.setMnemonicAt(0, KeyEvent.VK_1);
+            pane.addTab("Background Color", temp2);
+            pane.setMnemonicAt(1, KeyEvent.VK_2);
 
             c.gridy = 0;
             addToSettings.add(fontSize, c);
@@ -285,7 +283,7 @@ class Frame {
             c.gridy++;
             c.gridheight = 3;
             c.gridwidth = 4;
-            addToSettings.add(paner, c);
+            addToSettings.add(pane, c);
             JButton setAsDefault = new JButton("Set as Default");
             setAsDefault.addActionListener(e1 -> writeFile());
             c.gridy++;
@@ -303,7 +301,6 @@ class Frame {
             String[] themes = {"Original", "Motif", "Metal", "Nimbus", "PGS", "Smart", "Ocean", "Acrylic", "Aero", "Aluminium", "Bernstein", "Fast", "HiFi", "McWin", "Mint", "Noire", "Luna", "Texture"};
             JComboBox<String> box = new JComboBox<>(themes);
             box.setSelectedItem(SmartEditor.defaultButtonSelected);
-
             themeBox.add(box);
             themeBox.add(setDefault);
             themeFrame.add(themeBox);
@@ -319,38 +316,52 @@ class Frame {
             });
         });
 
-        newMenu.addActionListener(e -> makeNewTa("","Untitled.txt"));
+        newMenu.addActionListener(e -> {
+            if(!ta.getText().equals("")){
+                saveFile(filename);
+            }
+            makeNewTa("","Untitled.txt");
+        });
 
         open.addActionListener(e -> {
+            if(!ta.getText().equals("")) {
+                saveFile(filename);
+            }
             JFileChooser fc = new JFileChooser();
             FileNameExtensionFilter restrict = new FileNameExtensionFilter("Only .txt or .java files", "txt", "java");
             fc.addChoosableFileFilter(restrict);
-            fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
             //In response to a button click:
             int returnVal = fc.showOpenDialog(editorFrame);
             if (e.getSource() == open) {
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     ta.setText("");
                     File file = fc.getSelectedFile();
-                    filepath = file.getAbsolutePath();
-                    filename = file.getName();
-                    //This is where a real application would open the file.
-                    try {
-                        // File reader
-                        FileReader fr = new FileReader(file);
-                        // Buffered reader
-                        BufferedReader br = new BufferedReader(fr);
-                        // Initilize sl
-                        while ((s1 = br.readLine()) != null) {
-                            sl = sl + "\n" + s1;
+                    SmartEditor.fileDirectoryPath = file.getParent();
+                    if(!file.getAbsoluteFile().equals(filepath)) {
+                        filepath = file.getAbsolutePath();
+                        filename = file.getName();
+                        //This is where a real application would open the file.
+                        try {
+                            // File reader
+                            FileReader fr = new FileReader(file);
+                            // Buffered reader
+                            BufferedReader br = new BufferedReader(fr);
+                            // Initialize sl
+                            while ((s1 = br.readLine()) != null) {
+                                if (!sl.isEmpty()) {
+                                    sl = sl + "\n" + s1;
+                                } else {
+                                    sl += s1;
+                                }
+                            }
+                            tb.setTitleAt(tb.getSelectedIndex(), file.getPath());
+                            isSaved = true;
+                            makeNewTa(sl, file.getName());
+                            sl = "";
+                            s1 = "";
+                        } catch (Exception ex) {
+                            System.exit(0);
                         }
-                        tb.setTitleAt(tb.getSelectedIndex(),file.getPath());
-                        isSaved = true;
-                        makeNewTa(sl, file.getName());
-                        sl = "";
-                        s1 = "";
-                    } catch (Exception ex) {
-                        System.exit(0);
                     }
                 }
                 //Handle save button action.
@@ -358,6 +369,32 @@ class Frame {
         });
 
         save.addActionListener(e -> saveFile(filename));
+
+        rename.addActionListener(e -> {
+            JDialog log = new JDialog();
+            log.setSize(150,120);
+            log.setLayout(new GridLayout(3,1));
+            log.setTitle("Rename File");
+            JLabel lab = new JLabel("    File Name");
+            JTextArea taa = new JTextArea();
+            JButton renameFile = new JButton("Rename File");
+            log.add(lab);
+            log.add(taa);
+            log.add(renameFile);
+            log.setVisible(true);
+            log.requestFocus();
+            renameFile.addActionListener(e2 -> {
+                if(!taa.getText().isEmpty()){
+                    File file = new File(filepath);
+                    filepath = SmartEditor.fileDirectoryPath + File.separator + taa.getText();
+                    filename = taa.getText();
+                    if(file.delete()) {
+                        tb.setTitleAt(tb.getSelectedIndex(), filepath);
+                        saveFile(filename);
+                    }
+                }
+            });
+        });
 
         print.addActionListener(e -> {
             try {
@@ -370,30 +407,31 @@ class Frame {
             if (isSaved) {
                 System.exit(0);
             } else {
-                if (Objects.equals(filename, "Untitled.txt") && filepath.equals("")) {
+                if(SmartEditor.autoSave) {
                     saveFile(filename);
-                } else {
-                    //This is where a real application would save the file.
-                    editorFrame.setVisible(false);
-                    JDialog dialog = new JDialog();
-                    dialog.setLayout(new GridLayout(2, 1));
-                    JLabel lab = new JLabel("Do you want to save the file?");
-                    JButton pleaseSave = new JButton("Save");
-                    pleaseSave.setDefaultCapable(true);
-                    pleaseSave.addActionListener(e2 -> {
+                }else {
+                    if (Objects.equals(filename, "Untitled.txt") && filepath.equals("")) {
                         saveFile(filename);
-                        editorFrame.setVisible(true);
-                        dialog.setVisible(false);
-                    });
-                    JButton dontSave = new JButton("Don't Save");
-                    dontSave.addActionListener(e2 -> System.exit(0));
-                    JPanel pane = new JPanel(new GridLayout(1, 2));
-                    pane.add(pleaseSave);
-                    pane.add(dontSave);
-                    dialog.add(lab);
-                    dialog.add(pane);
-                    dialog.setSize(300, 200);
-                    dialog.setVisible(true);
+                    } else {
+                        JDialog dialog = new JDialog();
+                        dialog.setLayout(new GridLayout(2, 1));
+                        JLabel lab = new JLabel("Do you want to save the file?");
+                        JButton pleaseSave = new JButton("Save");
+                        pleaseSave.addActionListener(e2 -> {
+                            saveFile(filename);
+                            dialog.setVisible(false);
+                            editorFrame.setVisible(true);
+                        });
+                        JButton noSave = new JButton("Don't Save");
+                        noSave.addActionListener(e2 -> System.exit(0));
+                        JPanel pane = new JPanel(new GridLayout(1, 2));
+                        pane.add(pleaseSave);
+                        pane.add(noSave);
+                        dialog.add(lab);
+                        dialog.add(pane);
+                        dialog.setSize(300, 200);
+                        dialog.setVisible(true);
+                    }
                 }
             }
         });
@@ -413,6 +451,7 @@ class Frame {
             farDialog.setSize(400, 80);
             JTextArea findTa = new JTextArea();
             JButton findButton = new JButton("Find");
+            JButton backButton = new JButton("Find Previous");
             JTextArea replaceTa = new JTextArea();
             JButton replaceButton = new JButton("Replace");
             JButton replaceAllButton = new JButton("Replace All");
@@ -421,8 +460,9 @@ class Frame {
             c.gridy = 0;
             c.gridwidth = 3;
             farDialog.add(findTa, c);
-            c.gridwidth = 2;
+            c.gridwidth = 1;
             farDialog.add(findButton, c);
+            farDialog.add(backButton, c);
             c.gridy++;
             c.gridwidth = 3;
             farDialog.add(replaceTa, c);
@@ -476,12 +516,23 @@ class Frame {
                 }
             });
 
+            backButton.addActionListener(e2 -> {
+                if (!findTa.getText().isEmpty() && ta.getText().contains(findTa.getText())) {
+                    ta.requestFocus();
+                    SmartEditor.index--;
+                    if (SmartEditor.index < 0) {
+                        SmartEditor.index = start.size() - 1;
+                    }
+                    ta.select(start.get(SmartEditor.index), end.get(SmartEditor.index));
+                }
+            });
+
             findButton.addActionListener(e2 -> {
                 if (!findTa.getText().isEmpty() && ta.getText().contains(findTa.getText())) {
                     ta.requestFocus();
+                    SmartEditor.index++;
                     if (SmartEditor.index < start.size()) {
                         ta.select(start.get(SmartEditor.index), end.get(SmartEditor.index));
-                        SmartEditor.index++;
                     } else {
                         SmartEditor.index = 0;
                         ta.select(start.get(SmartEditor.index), end.get(SmartEditor.index));
@@ -507,6 +558,7 @@ class Frame {
         menu.add(newMenu);
         menu.add(open);
         menu.add(save);
+        menu.add(rename);
         menu.add(print);
         menu.add(exit);
         edit.add(cut);
@@ -516,6 +568,10 @@ class Frame {
         mb.add(menu);
         mb.add(edit);
         editorFrame.add(mb, BorderLayout.PAGE_START);
+        try {
+            changeTheme(SmartEditor.defaultButtonSelected);
+        } catch (Exception ignored) {
+        }
         editorFrame.setVisible(true);
     }
 
@@ -525,6 +581,7 @@ class Frame {
             if (fc.showSaveDialog(null) != JFileChooser.CANCEL_OPTION)
                 name = fc.getSelectedFile().getAbsolutePath();
             filepath = fc.getSelectedFile().getAbsolutePath();
+            SmartEditor.fileDirectoryPath = fc.getSelectedFile().getParent();
         }
         if (name != null && filepath != null) {  // else user cancelled
             try {
@@ -542,7 +599,9 @@ class Frame {
         }
     }
 
-    public static void changeTheme(String componentName) throws Exception {
+    public static void changeTheme(String componentName) throws
+            ClassNotFoundException, InstantiationException,
+            IllegalAccessException, UnsupportedLookAndFeelException  {
         switch (componentName) {
             case "Original":
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -693,16 +752,26 @@ class Frame {
                 }
             }
         });
+        if(title.isEmpty()) {
+            filename = null;
+            filepath = null;
+        }
 
         ta.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
+                isSaved = false;
                 if(SmartEditor.autoSave && counter == 1){
-                    saveFile(filename);
+                    System.out.println(filename);
+                    System.out.println(filepath);
+                    if(filename == null || filepath == null) {
+                        saveFile(filename);
+                        isSaved = true;
+                    }
                     counter++;
                 }else if(SmartEditor.autoSave){
                     if(ta.getText().length() < 8000) {
-                        if (counter % 6 == 0) {
+                        if (counter % 4 == 0) {
                             saveFile(filename);
                         }
                     }else if(ta.getText().length() >= 8000){
@@ -713,7 +782,6 @@ class Frame {
                     counter++;
                 }
                 if(!SmartEditor.autoSave) {
-                    isSaved = false;
                     String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
                     if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
                         Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
@@ -723,6 +791,7 @@ class Frame {
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                isSaved = false;
                 if(SmartEditor.autoSave && counter == 1){
                     saveFile(filename);
                     counter++;
@@ -732,14 +801,13 @@ class Frame {
                             saveFile(filename);
                         }
                     }else if(ta.getText().length() >= 8000){
-                        if(counter % 20 == 0){
+                        if(counter % 15 == 0){
                             saveFile(filename);
                         }
                     }
                     counter++;
                 }
                 if(!SmartEditor.autoSave) {
-                    isSaved = false;
                     String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
                     if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
                         Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
@@ -749,6 +817,7 @@ class Frame {
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                isSaved = false;
                 if(SmartEditor.autoSave && counter == 1){
                     saveFile(filename);
                     counter++;
@@ -765,7 +834,6 @@ class Frame {
                     counter++;
                 }
                 if(!SmartEditor.autoSave) {
-                    isSaved = false;
                     String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
                     if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
                         Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
@@ -776,8 +844,7 @@ class Frame {
         ta.setText(setText);
         try {
             changeTheme(SmartEditor.defaultButtonSelected);
-        } catch (Exception | Error e) {
-            System.out.println("Not fully painted, go to themes and manually set theme.");
+        } catch (Exception ignored) {
         }
         Frame.tb.add(title,scrollP);
     }
