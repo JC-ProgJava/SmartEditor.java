@@ -26,4 +26,6 @@ Installation:
 
 
   (Mac) .App:
+  
+  
      Double click on appliation to run, you can add application to your dock.
