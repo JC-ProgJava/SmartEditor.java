@@ -34,7 +34,7 @@ Installation:
      
      
   
-Demo(Installation below):
+Demo:
 
 
 Settings for font, color and autosave functions
