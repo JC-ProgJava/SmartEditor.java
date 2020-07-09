@@ -1,7 +1,7 @@
 # SmartEditor
 Public base of SmartEditor - a text editor built using Java.
 
-<a href="http://JC-ProgJava.github.io/SmartEditor.java">Website</a>
+<a href="http://JC-ProgJava.github.io/SmartEditor.java" target="_blank">Website</a>
 
 Requirements:
   Java 8+(1.8+).
