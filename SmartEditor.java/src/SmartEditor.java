@@ -1,41 +1,61 @@
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.plaf.metal.OceanTheme;
+import javax.swing.text.BadLocationException;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.PrinterException;
 import java.io.*;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /*
- * VERSION: 1.3
+ * VERSION: 1.5
  * AUTHOR: JC-ProgJava
- * SPRINT-VERSION: 1.6
+ * SPRINT-VERSION: 1.7
  * LICENSE: CC0 1.0 Universal
  * */
 
-public class SmartEditor {
+public class SmartEditor{
     public static boolean automaticSelect = true;
     public static int index = 0;
-    public static String defaultButtonSelected = "original";
+    public static String defaultButtonSelected = "Nimbus";
     public static int showSizeSpin = 14;
-    public static String showFontCombo = "SansSerif";
+    public static String showFontCombo = "Noto Sans";
     public static Color showColorPick = new Color(0, 0, 0);
     public static Color showBackPick = new Color(255, 255, 255);
     public static boolean autoSave = false;
+    public static boolean saveOnClose = false;
+    public static boolean remindUpdate = true;
+    public static String editorAppPath;
+
+    static {
+        try {
+            editorAppPath = new File(SmartEditor.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
+        } catch (URISyntaxException ignored) {
+        }
+    }
+
     public static String path = System.getProperty("user.home") + File.separator + "SmartEditor" + File.separator + "Settings.txt";
     public static String createFolderPath = System.getProperty("user.home") + File.separator + "SmartEditor";
     public static String fileDirectoryPath = "";
+    public static String version = "1.5";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         File folder = new File(createFolderPath);
 
         try {
@@ -47,7 +67,9 @@ public class SmartEditor {
             SmartEditor.showBackPick = new Color(input.nextInt());
             SmartEditor.defaultButtonSelected = input.next();
             SmartEditor.autoSave = input.nextBoolean();
-        } catch (FileNotFoundException e) {
+            SmartEditor.saveOnClose = input.nextBoolean();
+            SmartEditor.remindUpdate = input.nextBoolean();
+        } catch (Exception e) {
             folder.mkdir();
             File settingsFile = new File(createFolderPath + File.separator + "Settings.txt");
             try {
@@ -59,22 +81,102 @@ public class SmartEditor {
                 fw.write(automaticSelect + "\n");
                 fw.write(SmartEditor.defaultButtonSelected + "\n");
                 fw.write(autoSave + "\n");
+                fw.write(saveOnClose + "\n");
+                fw.write(remindUpdate + "\n");
                 fw.close();
             } catch (IOException x) {
                 x.printStackTrace();
             }
         }
+
+        File pathApp = new File(createFolderPath + File.separator + "path.txt");
+        FileWriter fww = new FileWriter(pathApp, false);
+        fww.write(SmartEditor.editorAppPath + "\n");
+        fww.close();
+
         Frame frame = new Frame();
         frame.createFrame();
+        checkForUpdates("auto");
+    }
+    public static void checkForUpdates(String autoManual) throws IOException {
+        URL versionURl = new URL("https://raw.githubusercontent.com/JC-ProgJava/SmartEditor.java/master/docs/version.txt");
+        Scanner input = new Scanner(versionURl.openStream());
+        while(input.hasNext()) {
+            String line = input.nextLine();
+            if (!line.equals(version) && remindUpdate) {
+                JDialog log = new JDialog();
+                log.setSize(380,80);
+                log.setTitle("Version Update");
+                JLabel lab = new JLabel("Version " + line + " of SmartEditor is available, do you want to update?");
+                JButton dontRemind = new JButton("Don't Remind Me");
+                JButton cancel = new JButton("Cancel");
+                JButton updatePlease = new JButton("Update");
+                JPanel pane = new JPanel();
+                pane.add(lab);
+                pane.add(dontRemind);
+                pane.add(cancel);
+                pane.add(updatePlease);
+                log.add(pane);
+                log.setVisible(true);
+                dontRemind.addActionListener(e -> {
+                    SmartEditor.remindUpdate = false;
+                    Frame.writeFile();
+                    log.setVisible(false);
+                    log.dispose();
+                });
+
+                cancel.addActionListener(e -> {
+                    log.setVisible(false);
+                    log.dispose();
+                });
+
+                updatePlease.addActionListener(e -> {
+                    if(!Frame.ta.getText().isEmpty()) {
+                        File file = new File(createFolderPath + File.separator + "temp");
+                        try {
+                            FileWriter fw = new FileWriter(file, false);
+                            if(!Frame.filepath.isEmpty()) {
+                                fw.write(Frame.filepath + "\n");
+                            }
+                            fw.write(Frame.ta.getText() + "\n");
+                        } catch (IOException ignored) {
+                        }
+                    }
+                    try {
+                        InputStream inputStream = new URL("https://github.com/JC-ProgJava/SmartEditor.java/blob/master/update.jar?raw=true").openStream();
+                        Files.copy(inputStream, Paths.get(createFolderPath + File.separator + "update.jar"));
+                        Process proc = Runtime.getRuntime().exec("java -jar " + createFolderPath + File.separator + "update.jar");
+                    } catch (IOException ex) {
+                        System.exit(-1);
+                    }
+                    System.exit(1);
+                });
+            }
+            if(line.equals(version) && autoManual.equals("manual")){
+                JDialog log = new JDialog();
+                log.setSize(300,80);
+                JLabel lab = new JLabel("SmartEditor version " + version + " is the latest available.");
+                JButton but = new JButton("OK");
+                but.addActionListener(e -> {
+                    log.dispose();
+                });
+                JPanel pane = new JPanel();
+                pane.add(lab);
+                pane.add(but);
+                log.add(pane);
+                log.setVisible(true);
+                log.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            }
+        }
     }
 }
 class Frame {
     public static String filename = null;
+    public static String saveText = "";
     public static String filepath = "";
     public static boolean isSaved = true;
     public static JFrame editorFrame = new JFrame("SmartEditor");
     public static JFrame settingFrame = new JFrame("Settings");
-
     public static JFrame themeFrame = new JFrame("Theme");
     public static JDialog farDialog = new JDialog();
     public static ArrayList<Integer> start = new ArrayList<>();
@@ -90,13 +192,30 @@ class Frame {
     public static String sl = "", s1 = "";
     public static JTabbedPane tb;
 
-    public static void createFrame() {
+    public static void createFrame() throws Exception, Error{
         m = m.modPow(dd, nn);
         tb = new JTabbedPane();
         editorFrame.add(tb);
         editorFrame.setSize(600,600);
         editorFrame.setVisible(true);
-        makeNewTa("","Untitled.txt");
+        File files = new File(SmartEditor.createFolderPath + File.separator + "temp");
+        if(!files.exists()) {
+            makeNewTa("", "Untitled.txt");
+        }else{
+            String path = "";
+            Scanner fr = new Scanner(files);
+            String x = "";
+            while(fr.hasNextLine()){
+                String append = fr.nextLine();
+                Path p = Paths.get(append);
+                if(p.isAbsolute()){
+                    path = p.toString();
+                }else {
+                    x += append + "\n";
+                }
+            }
+            makeNewTa(x, path);
+        }
         editorFrame.addWindowListener(new WindowListener() {
             @Override
             public void windowOpened(WindowEvent e) {
@@ -108,13 +227,16 @@ class Frame {
                 if (isSaved) {
                     System.exit(1);
                 } else {
-                    if(SmartEditor.autoSave){
+                    if(SmartEditor.autoSave || SmartEditor.saveOnClose){
                         saveFile(filename);
                         System.exit(1);
                     }else {
-                        if (Objects.equals(filename, "Untitled.txt") && filepath.equals("")) {
+                        /*
+                        if (Objects.equals(filename, "Untitled.txt") && filepath.equals("") && !isSaved) {
                             saveFile(filename);
                         } else {
+
+                         */
                             JDialog dialog = new JDialog();
                             dialog.setLayout(new GridLayout(2, 1));
                             JLabel lab = new JLabel("Do you want to save the file?");
@@ -133,7 +255,7 @@ class Frame {
                             dialog.add(pane);
                             dialog.setSize(300, 200);
                             dialog.setVisible(true);
-                        }
+                        //}
                     }
                 }
             }
@@ -173,6 +295,7 @@ class Frame {
         JMenuItem open = new JMenuItem("Open");
         JMenuItem save = new JMenuItem("Save");
         JMenuItem rename = new JMenuItem("Rename");
+        JMenuItem forceCheck = new JMenuItem("Check for Updates");
         JMenuItem print = new JMenuItem("Print");
         JMenuItem exit = new JMenuItem("Exit");
         JMenuItem cut = new JMenuItem("Cut");
@@ -214,7 +337,36 @@ class Frame {
                 }
             });
 
+            JLabel saveOnClose = new JLabel("Save On Close");
+            JCheckBox saveOnCloseT = new JCheckBox();
+            saveOnCloseT.setSelected(SmartEditor.saveOnClose);
+            saveOnCloseT.addChangeListener(e12 -> {
+                if(saveOnCloseT.isSelected()){
+                    SmartEditor.saveOnClose = true;
+                }else if(!autoSaveT.isSelected()){
+                    SmartEditor.saveOnClose = false;
+                }
+            });
+
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            try {
+
+                InputStream stream = SmartEditor.class.getResourceAsStream("NotoSans" + File.separator + "NotoSans-Light.ttf");
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+                stream = SmartEditor.class.getResourceAsStream("NotoSans" + File.separator + "NotoSans-Regular.ttf");
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+                stream = SmartEditor.class.getResourceAsStream("NotoSans" + File.separator + "NotoSans-Thin.ttf");
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+                stream = SmartEditor.class.getResourceAsStream("NotoSerif" + File.separator + "NotoSerif-Light.ttf");
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+                stream = SmartEditor.class.getResourceAsStream("NotoSerif" + File.separator + "NotoSerif-Regular.ttf");
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+                stream = SmartEditor.class.getResourceAsStream("NotoSerif" + File.separator + "NotoSerif-Thin.ttf");
+                ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+            }catch(Exception ex){
+                ex.printStackTrace();
+            }
+
             String[] array = ge.getAvailableFontFamilyNames();
             JComboBox<String> box = new JComboBox<>(array);
             box.setSelectedItem(SmartEditor.showFontCombo);
@@ -280,6 +432,9 @@ class Frame {
             c.gridy++;
             addToSettings.add(autoSave, c);
             addToSettings.add(autoSaveT, c);
+            c.gridy++;
+            addToSettings.add(saveOnClose, c);
+            addToSettings.add(saveOnCloseT, c);
             c.gridy++;
             c.gridheight = 3;
             c.gridwidth = 4;
@@ -356,6 +511,7 @@ class Frame {
                             }
                             tb.setTitleAt(tb.getSelectedIndex(), file.getPath());
                             isSaved = true;
+                            saveText = sl;
                             makeNewTa(sl, file.getName());
                             sl = "";
                             s1 = "";
@@ -407,7 +563,7 @@ class Frame {
             if (isSaved) {
                 System.exit(0);
             } else {
-                if(SmartEditor.autoSave) {
+                if(SmartEditor.autoSave || SmartEditor.saveOnClose) {
                     saveFile(filename);
                 }else {
                     if (Objects.equals(filename, "Untitled.txt") && filepath.equals("")) {
@@ -470,51 +626,10 @@ class Frame {
             farDialog.add(replaceButton, c);
             farDialog.add(replaceAllButton, c);
             farDialog.setVisible(true);
-            findTa.getDocument().addDocumentListener(new DocumentListener() {
-                @Override
-                public void insertUpdate(DocumentEvent e) {
-                    start.clear();
-                    end.clear();
-                    String findInHere = ta.getText();
-                    String findText = findTa.getText();
-                    int index = findInHere.indexOf(findText);
-                    int endIndex;
-                    do {
-                        index = findInHere.indexOf(findText, index + 1);
-                        if (index == -1) {
-                            index++;
-                        }
-                        endIndex = index + findText.length();
-                        start.add(index);
-                        end.add(endIndex);
-                    } while ((index > 0));
-                }
 
-                @Override
-                public void removeUpdate(DocumentEvent e) {
-                    start.clear();
-                    end.clear();
-                    String findInHere = ta.getText();
-                    String findText = findTa.getText();
-                    int index = findInHere.indexOf(findText);
-                    int endIndex = index + findText.length();
-                    start.add(index);
-                    end.add(endIndex);
-                    do {
-                        index = findInHere.indexOf(findText, index + 1);
-                        if (index == -1) {
-                            index = 0;
-                        }
-                        endIndex = index + findText.length();
-                        start.add(index);
-                        end.add(endIndex);
-                    } while ((index > 0));
-                }
-
-                @Override
-                public void changedUpdate(DocumentEvent e) {
-                }
-            });
+            if(ta.getSelectedText() != null){
+                findTa.setText(ta.getSelectedText());
+            }
 
             backButton.addActionListener(e2 -> {
                 if (!findTa.getText().isEmpty() && ta.getText().contains(findTa.getText())) {
@@ -528,14 +643,37 @@ class Frame {
             });
 
             findButton.addActionListener(e2 -> {
+                start.clear();
+                end.clear();
+                if(!findTa.getText().isEmpty()) {
+                    String findInHere = ta.getText();
+                    String findText = findTa.getText();
+                    int index = findInHere.indexOf(findText);
+                    int endIndex = index + findText.length();
+                    start.add(index);
+                    end.add(endIndex);
+                    do {
+                        index = findInHere.indexOf(findText, index + 1);
+                        if (index == -1) {
+                            break;
+                        }
+                        endIndex = index + findText.length();
+                        start.add(index);
+                        end.add(endIndex);
+                    } while ((index > 0));
+                    Collections.sort(start);
+                    Collections.sort(end);
+                }
+
                 if (!findTa.getText().isEmpty() && ta.getText().contains(findTa.getText())) {
                     ta.requestFocus();
-                    SmartEditor.index++;
                     if (SmartEditor.index < start.size()) {
                         ta.select(start.get(SmartEditor.index), end.get(SmartEditor.index));
-                    } else {
+                        SmartEditor.index++;
+                    }else{
                         SmartEditor.index = 0;
                         ta.select(start.get(SmartEditor.index), end.get(SmartEditor.index));
+                        SmartEditor.index++;
                     }
                 }
             });
@@ -553,6 +691,16 @@ class Frame {
             });
         });
 
+        forceCheck.addActionListener(e -> {
+            try {
+                SmartEditor.remindUpdate = true;
+                writeFile();
+                SmartEditor.checkForUpdates("manual");
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        });
+
         menu.add(settings);
         menu.add(theme);
         menu.add(newMenu);
@@ -560,6 +708,7 @@ class Frame {
         menu.add(save);
         menu.add(rename);
         menu.add(print);
+        menu.add(forceCheck);
         menu.add(exit);
         edit.add(cut);
         edit.add(copy);
@@ -580,6 +729,7 @@ class Frame {
             JFileChooser fc = new JFileChooser();
             if (fc.showSaveDialog(null) != JFileChooser.CANCEL_OPTION)
                 name = fc.getSelectedFile().getAbsolutePath();
+                saveText = ta.getText();
             filepath = fc.getSelectedFile().getAbsolutePath();
             SmartEditor.fileDirectoryPath = fc.getSelectedFile().getParent();
         }
@@ -678,6 +828,8 @@ class Frame {
             fw.write(SmartEditor.showBackPick.getRGB() + "\n");
             fw.write(SmartEditor.defaultButtonSelected + "\n");
             fw.write(SmartEditor.autoSave + "\n");
+            fw.write(SmartEditor.saveOnClose + "\n");
+            fw.write(SmartEditor.remindUpdate + "\n");
             fw.close();
         } catch (IOException ioException) {
             ioException.printStackTrace();
@@ -722,6 +874,97 @@ class Frame {
         ta.getInputMap().put(KeyStroke.getKeyStroke("ctrl-z"), "undo");
         ta.getInputMap().put(KeyStroke.getKeyStroke("tab"), "tab-insert");
         ta.getInputMap().put(KeyStroke.getKeyStroke("ctrl-q"), "quit");
+        ta.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if(e.isPopupTrigger() && ta.getSelectedText() != null && !ta.getSelectedText().isEmpty() && ta.getSelectedText().contains(" ")){
+                    int caretPosition = ta.getCaretPosition();
+                    JPopupMenu jpm = new JPopupMenu();
+                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String phonemeStri = getStringPhoneme(ta.getSelectedText());
+                    JLabel hoverPhoneme = new JLabel(phonemeStri);
+                    jpm.add(hoverPhoneme);
+                    jpm.add(phoneme);
+                    jpm.show(e.getComponent(), e.getX(), e.getY());
+                }else if(e.isPopupTrigger() && !ta.getSelectedText().contains(" ")){
+                    JPopupMenu jpm = new JPopupMenu();
+                    jpm.setFocusable(true);
+                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String phonemeStri = getStringPhoneme(ta.getSelectedText().toLowerCase());
+                    ArrayList<String> wordList = new ArrayList<>();
+                    try {
+                        wordList = getBestChoiceWord(ta.getSelectedText().toLowerCase());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    Object[] x = wordList.stream().filter(s -> s.startsWith(ta.getSelectedText().substring(0,1))).limit(20).toArray();
+                    JList listComp = new JList<>(x);
+                    listComp.setBorder(BorderFactory.createEmptyBorder(0, 2, 5, 2));
+                    listComp.setFocusable(true);
+
+                    listComp.addListSelectionListener(e2 -> {
+                        try {
+                            String xy = listComp.getSelectedValue().toString();
+                            xy = xy.split(" ")[0];
+                            ta.replaceSelection("");
+                            ta.getDocument().insertString(ta.getCaretPosition(), xy, null);
+                            jpm.setVisible(false);
+                        } catch (BadLocationException ignored) {
+                        }
+                    });
+                    jpm.add(listComp);
+                    JLabel hoverPhoneme = new JLabel(phonemeStri);
+                    jpm.add(hoverPhoneme);
+                    jpm.add(phoneme);
+                    jpm.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent me) {
+                if(me.isPopupTrigger() && ta.getSelectedText() != null && !ta.getSelectedText().isEmpty() && ta.getSelectedText().contains(" ")){
+                    int caretPosition = ta.getCaretPosition();
+                    JPopupMenu jpm = new JPopupMenu();
+                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String phonemeStri = getStringPhoneme(ta.getSelectedText());
+                    JLabel hoverPhoneme = new JLabel(phonemeStri);
+                    jpm.add(hoverPhoneme);
+                    jpm.add(phoneme);
+                    jpm.show(me.getComponent(), me.getX(), me.getY());
+                }else if(me.isPopupTrigger() && !ta.getSelectedText().contains(" ")){
+                    JPopupMenu jpm = new JPopupMenu();
+                    jpm.setFocusable(true);
+                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String phonemeStri = getStringPhoneme(ta.getSelectedText().toLowerCase());
+                    ArrayList<String> wordList = new ArrayList<>();
+                    try {
+                        wordList = getBestChoiceWord(ta.getSelectedText().toLowerCase());
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                    Object[] x = wordList.stream().filter(s -> s.startsWith(ta.getSelectedText().substring(0,1))).limit(20).toArray();
+                    JList listComp = new JList<>(x);
+                    listComp.setBorder(BorderFactory.createEmptyBorder(0, 2, 5, 2));
+                    listComp.setFocusable(true);
+
+                    listComp.addListSelectionListener(e2 -> {
+                        try {
+                            String xy = listComp.getSelectedValue().toString();
+                            xy = xy.split(" ")[0];
+                            ta.replaceSelection("");
+                            ta.getDocument().insertString(ta.getCaretPosition(), xy, null);
+                            jpm.setVisible(false);
+                        } catch (BadLocationException ignored) {
+                        }
+                    });
+                    jpm.add(listComp);
+                    JLabel hoverPhoneme = new JLabel(phonemeStri);
+                    jpm.add(hoverPhoneme);
+                    jpm.add(phoneme);
+                    jpm.show(me.getComponent(), me.getX(), me.getY());
+                }
+            }
+        });
 
         ta.addKeyListener(new KeyListener() {
             @Override
@@ -760,83 +1003,111 @@ class Frame {
         ta.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
-                isSaved = false;
-                if(SmartEditor.autoSave && counter == 1){
-                    System.out.println(filename);
-                    System.out.println(filepath);
-                    if(filename == null || filepath == null) {
-                        saveFile(filename);
-                        isSaved = true;
-                    }
-                    counter++;
-                }else if(SmartEditor.autoSave){
-                    if(ta.getText().length() < 8000) {
-                        if (counter % 4 == 0) {
+                if(!saveText.equals(ta.getText())) {
+                    isSaved = false;
+                    if (SmartEditor.autoSave && counter == 1) {
+                        if (filename == null || filepath == null) {
                             saveFile(filename);
                         }
-                    }else if(ta.getText().length() >= 8000){
-                        if(counter % 20 == 0){
-                            saveFile(filename);
+                        counter++;
+                    } else if (SmartEditor.autoSave) {
+                        if (ta.getText().length() < 8000) {
+                            if (counter % 4 == 0) {
+                                saveFile(filename);
+                            }
+                        } else if (ta.getText().length() >= 8000) {
+                            if (counter % 20 == 0) {
+                                saveFile(filename);
+                            }
+                        }
+                        counter++;
+                    }
+                    if (!SmartEditor.autoSave) {
+                        String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
+                        if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
+                            Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
                         }
                     }
-                    counter++;
-                }
-                if(!SmartEditor.autoSave) {
+                }else {
+                    isSaved = true;
                     String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
-                    if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
-                        Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
+                    title = title.substring(0, title.length() - 2);
+                    if (Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
+                        Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title);
                     }
                 }
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
-                isSaved = false;
-                if(SmartEditor.autoSave && counter == 1){
-                    saveFile(filename);
-                    counter++;
-                }else if(SmartEditor.autoSave){
-                    if(ta.getText().length() < 8000) {
-                        if (counter % 6 == 0) {
+                if(!saveText.equals(ta.getText())) {
+                    isSaved = false;
+                    if (SmartEditor.autoSave && counter == 1) {
+                        if (filename == null || filepath == null) {
                             saveFile(filename);
                         }
-                    }else if(ta.getText().length() >= 8000){
-                        if(counter % 15 == 0){
-                            saveFile(filename);
+                        counter++;
+                    } else if (SmartEditor.autoSave) {
+                        if (ta.getText().length() < 8000) {
+                            if (counter % 4 == 0) {
+                                saveFile(filename);
+                            }
+                        } else if (ta.getText().length() >= 8000) {
+                            if (counter % 20 == 0) {
+                                saveFile(filename);
+                            }
+                        }
+                        counter++;
+                    }
+                    if (!SmartEditor.autoSave) {
+                        String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
+                        if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
+                            Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
                         }
                     }
-                    counter++;
-                }
-                if(!SmartEditor.autoSave) {
+                }else {
+                    isSaved = true;
                     String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
-                    if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
-                        Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
+                    title = title.substring(0, title.length() - 2);
+                    if (Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
+                        Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title);
                     }
                 }
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
-                isSaved = false;
-                if(SmartEditor.autoSave && counter == 1){
-                    saveFile(filename);
-                    counter++;
-                }else if(SmartEditor.autoSave){
-                    if(ta.getText().length() < 8000) {
-                        if (counter % 6 == 0) {
+                if(!saveText.equals(ta.getText())) {
+                    isSaved = false;
+                    if (SmartEditor.autoSave && counter == 1) {
+                        if (filename == null || filepath == null) {
                             saveFile(filename);
                         }
-                    }else if(ta.getText().length() >= 8000){
-                        if(counter % 20 == 0){
-                            saveFile(filename);
+                        counter++;
+                    } else if (SmartEditor.autoSave) {
+                        if (ta.getText().length() < 8000) {
+                            if (counter % 4 == 0) {
+                                saveFile(filename);
+                            }
+                        } else if (ta.getText().length() >= 8000) {
+                            if (counter % 20 == 0) {
+                                saveFile(filename);
+                            }
+                        }
+                        counter++;
+                    }
+                    if (!SmartEditor.autoSave) {
+                        String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
+                        if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
+                            Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
                         }
                     }
-                    counter++;
-                }
-                if(!SmartEditor.autoSave) {
+                }else {
+                    isSaved = true;
                     String title = Frame.tb.getTitleAt(Frame.tb.getSelectedIndex());
-                    if (!Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
-                        Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title + " *");
+                    title = title.substring(0, title.length() - 2);
+                    if (Frame.tb.getTitleAt(Frame.tb.getSelectedIndex()).contains(" *")) {
+                        Frame.tb.setTitleAt(Frame.tb.getSelectedIndex(), title);
                     }
                 }
             }
@@ -847,5 +1118,61 @@ class Frame {
         } catch (Exception ignored) {
         }
         Frame.tb.add(title,scrollP);
+    }
+
+    public static String getStringPhoneme(String taText){
+        return "phoneme here";
+    }
+
+    public static ArrayList<String> getBestChoiceWord(String word) throws URISyntaxException {
+        int correct = 0;
+        ArrayList<String> listed = new ArrayList<>();
+        File file = new File(new File(SmartEditor.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath() + File.separator + "words.txt");
+        Scanner reader = null;
+        try {
+            reader = new Scanner(file);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        while(reader.hasNext()){
+            double percent;
+            String compareToThis = reader.nextLine();
+            char[] s1 = word.toCharArray();
+            char[] s2 = compareToThis.toCharArray();
+            int maxlen = Math.min(s1.length, s2.length);
+            for (int index = 0; index < maxlen; index++) {
+                String x = String.valueOf(s1[index]);
+                String y = String.valueOf(s2[index]);
+                if (x.equals(y)) {
+                    correct++;
+                }
+            }
+            double length = Math.max(s1.length, s2.length);
+            percent = correct / length;
+            percent *= 100;
+            boolean perfect = false;
+            if (percent > 80 && compareToThis.charAt(0) == word.charAt(0)) {
+                if(String.valueOf(percent).equals("100.00")){
+                    perfect = true;
+                }
+                String addtoit = compareToThis + " : " + String.format("%.2f", percent) + "% similar.";
+                listed.add(addtoit);
+            }
+            if(compareToThis.contains(word) && !perfect && word.length() * 2 > compareToThis.length()){
+                String addtoit = compareToThis + " : 80.00% similar.";
+                listed.add(addtoit);
+            }
+            correct = 0;
+        }
+
+        for(String x : listed){
+            if(x.contains("100.00% similar.")){
+                listed.clear();
+                listed.add(x);
+                break;
+            }
+        }
+
+        return listed;
     }
 }
