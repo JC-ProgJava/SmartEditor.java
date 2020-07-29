@@ -24,9 +24,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /*
- * VERSION: 1.5
+ * VERSION: 1.7
  * AUTHOR: JC-ProgJava
- * SPRINT-VERSION: 1.7
+ * SPRINT-VERSION: 1.8
  * LICENSE: CC0 1.0 Universal
  * */
 
@@ -41,6 +41,7 @@ public class SmartEditor{
     public static boolean autoSave = false;
     public static boolean saveOnClose = false;
     public static boolean remindUpdate = true;
+    public static String[] openRecentsFilePath = {"","","","","","","","","",""};
     public static String editorAppPath;
 
     static {
@@ -53,7 +54,7 @@ public class SmartEditor{
     public static String path = System.getProperty("user.home") + File.separator + "SmartEditor" + File.separator + "Settings.txt";
     public static String createFolderPath = System.getProperty("user.home") + File.separator + "SmartEditor";
     public static String fileDirectoryPath = "";
-    public static String version = "1.5";
+    public static String version = "1.7";
 
     public static void main(String[] args) throws Exception {
         File folder = new File(createFolderPath);
@@ -69,6 +70,11 @@ public class SmartEditor{
             SmartEditor.autoSave = input.nextBoolean();
             SmartEditor.saveOnClose = input.nextBoolean();
             SmartEditor.remindUpdate = input.nextBoolean();
+            int countIndex = 0;
+            while(input.hasNextLine()) {
+                SmartEditor.openRecentsFilePath[countIndex] = input.nextLine();
+                countIndex++;
+            }
         } catch (Exception e) {
             folder.mkdir();
             File settingsFile = new File(createFolderPath + File.separator + "Settings.txt");
@@ -103,7 +109,7 @@ public class SmartEditor{
         Scanner input = new Scanner(versionURl.openStream());
         while(input.hasNext()) {
             String line = input.nextLine();
-            if (!line.equals(version) && remindUpdate) {
+            if (Double.parseDouble(line) > Double.parseDouble(version) && remindUpdate) {
                 JDialog log = new JDialog();
                 log.setSize(380,80);
                 log.setTitle("Version Update");
@@ -132,27 +138,27 @@ public class SmartEditor{
 
                 updatePlease.addActionListener(e -> {
                     if(!Frame.ta.getText().isEmpty()) {
-                        File file = new File(createFolderPath + File.separator + "temp");
+                        File file = new File(createFolderPath + File.separator + "temp.txt");
                         try {
                             FileWriter fw = new FileWriter(file, false);
                             if(!Frame.filepath.isEmpty()) {
                                 fw.write(Frame.filepath + "\n");
                             }
                             fw.write(Frame.ta.getText() + "\n");
+                            fw.close();
                         } catch (IOException ignored) {
                         }
                     }
                     try {
                         InputStream inputStream = new URL("https://github.com/JC-ProgJava/SmartEditor.java/blob/master/update.jar?raw=true").openStream();
-                        Files.copy(inputStream, Paths.get(createFolderPath + File.separator + "update.jar"));
+                        Files.copy(inputStream, Paths.get(createFolderPath + File.separator + "update.jar"), StandardCopyOption.REPLACE_EXISTING);
                         Process proc = Runtime.getRuntime().exec("java -jar " + createFolderPath + File.separator + "update.jar");
                     } catch (IOException ex) {
                         System.exit(-1);
                     }
                     System.exit(1);
                 });
-            }
-            if(line.equals(version) && autoManual.equals("manual")){
+            }else if(Double.parseDouble(line) <= Double.parseDouble(version) && autoManual.equals("manual")){
                 JDialog log = new JDialog();
                 log.setSize(300,80);
                 JLabel lab = new JLabel("SmartEditor version " + version + " is the latest available.");
@@ -170,6 +176,7 @@ public class SmartEditor{
         }
     }
 }
+
 class Frame {
     public static String filename = null;
     public static String saveText = "";
@@ -198,11 +205,11 @@ class Frame {
         editorFrame.add(tb);
         editorFrame.setSize(600,600);
         editorFrame.setVisible(true);
-        File files = new File(SmartEditor.createFolderPath + File.separator + "temp");
+        File files = new File(SmartEditor.createFolderPath + File.separator + "temp.txt");
         if(!files.exists()) {
             makeNewTa("", "Untitled.txt");
         }else{
-            String path = "";
+            String path = "Untitled.txt *";
             Scanner fr = new Scanner(files);
             String x = "";
             while(fr.hasNextLine()){
@@ -214,7 +221,12 @@ class Frame {
                     x += append + "\n";
                 }
             }
+
             makeNewTa(x, path);
+            if(path.equals("Untitled.txt *")){
+                isSaved = false;
+            }
+            Files.delete(Paths.get(files.getAbsolutePath()));
         }
         editorFrame.addWindowListener(new WindowListener() {
             @Override
@@ -293,6 +305,8 @@ class Frame {
         JMenuItem theme = new JMenuItem("Theme");
         JMenuItem newMenu = new JMenuItem("New");
         JMenuItem open = new JMenuItem("Open");
+        JMenu openRecent = new JMenu("Open Recent");
+        updateList(openRecent);
         JMenuItem save = new JMenuItem("Save");
         JMenuItem rename = new JMenuItem("Rename");
         JMenuItem forceCheck = new JMenuItem("Check for Updates");
@@ -494,6 +508,28 @@ class Frame {
                     SmartEditor.fileDirectoryPath = file.getParent();
                     if(!file.getAbsoluteFile().equals(filepath)) {
                         filepath = file.getAbsolutePath();
+                        boolean isEmpty = false;
+                        boolean filledBlank = false;
+                        for(int x = 0; x < SmartEditor.openRecentsFilePath.length - 1; x++){
+                            if(SmartEditor.openRecentsFilePath[x].equals(filepath)){
+                                break;
+                            }else if(SmartEditor.openRecentsFilePath[x].isEmpty() && !filledBlank){
+                                SmartEditor.openRecentsFilePath[x] = filepath;
+                                filledBlank = true;
+                            }else{
+                                isEmpty = true;
+                            }
+                        }
+
+                        if(!isEmpty){
+                            int position = SmartEditor.openRecentsFilePath.length - 1;
+                            for (int i = (position - 1); i >= 0; i--) {
+                                SmartEditor.openRecentsFilePath[i+1] = SmartEditor.openRecentsFilePath[i];
+                            }
+                            SmartEditor.openRecentsFilePath[0] = filepath;
+                        }
+                        writeFile();
+                        updateList(openRecent);
                         filename = file.getName();
                         //This is where a real application would open the file.
                         try {
@@ -705,6 +741,7 @@ class Frame {
         menu.add(theme);
         menu.add(newMenu);
         menu.add(open);
+        menu.add(openRecent);
         menu.add(save);
         menu.add(rename);
         menu.add(print);
@@ -818,6 +855,85 @@ class Frame {
         SmartEditor.defaultButtonSelected = componentName;
     }
 
+    public static void updateList(JMenu openRecent){
+        openRecent.removeAll();
+        int size = 0;
+        for(String x : SmartEditor.openRecentsFilePath){
+            if(!x.isEmpty()){
+                size++;
+            }
+        }
+        String[] suitable = new String[size];
+        size = 0;
+        for(String x : SmartEditor.openRecentsFilePath){
+            if(!x.isEmpty()){
+                suitable[size] = x;
+                size++;
+            }
+        }
+        JList lister = new JList<>(suitable);
+        openRecent.add(lister);
+
+        lister.addListSelectionListener(e -> {
+            if(!ta.getText().equals("")) {
+                saveFile(filename);
+            }
+            ta.setText("");
+            File file = new File(lister.getSelectedValue().toString());
+            SmartEditor.fileDirectoryPath = file.getParent();
+            if(!file.getAbsoluteFile().equals(filepath)) {
+                filepath = file.getAbsolutePath();
+                boolean isEmpty = false;
+                boolean filledBlank = false;
+                for(int x = 0; x < SmartEditor.openRecentsFilePath.length - 1; x++){
+                    if(SmartEditor.openRecentsFilePath[x].equals(filepath)){
+                        isEmpty = true;
+                        break;
+                    }else if(SmartEditor.openRecentsFilePath[x].isEmpty() && !filledBlank){
+                        SmartEditor.openRecentsFilePath[x] = filepath;
+                        filledBlank = true;
+                    }else{
+                        isEmpty = true;
+                    }
+                }
+
+                if(!isEmpty){
+                    int position = SmartEditor.openRecentsFilePath.length - 1;
+                    for (int i = (position - 1); i >= 0; i--) {
+                        SmartEditor.openRecentsFilePath[i+1] = SmartEditor.openRecentsFilePath[i];
+                    }
+                    SmartEditor.openRecentsFilePath[0] = filepath;
+                }
+                writeFile();
+                updateList(openRecent);
+                filename = file.getName();
+                //This is where a real application would open the file.
+                try {
+                    // File reader
+                    FileReader fr = new FileReader(file);
+                    // Buffered reader
+                    BufferedReader br = new BufferedReader(fr);
+                    // Initialize sl
+                    while ((s1 = br.readLine()) != null) {
+                        if (!sl.isEmpty()) {
+                            sl = sl + "\n" + s1;
+                        } else {
+                            sl += s1;
+                        }
+                    }
+                    tb.setTitleAt(tb.getSelectedIndex(), file.getPath());
+                    isSaved = true;
+                    saveText = sl;
+                    makeNewTa(sl, file.getName());
+                    sl = "";
+                    s1 = "";
+                } catch (Exception ex) {
+                    System.exit(0);
+                }
+            }
+        });
+    }
+
     public static void writeFile() {
         try {
             File file = new File(SmartEditor.createFolderPath + File.separator + "Settings.txt");
@@ -830,6 +946,11 @@ class Frame {
             fw.write(SmartEditor.autoSave + "\n");
             fw.write(SmartEditor.saveOnClose + "\n");
             fw.write(SmartEditor.remindUpdate + "\n");
+            for(String x : SmartEditor.openRecentsFilePath){
+                if(!x.isEmpty()){
+                    fw.write(x + "\n");
+                }
+            }
             fw.close();
         } catch (IOException ioException) {
             ioException.printStackTrace();
@@ -868,20 +989,27 @@ class Frame {
         ta.setLineWrap(true);
         ta.setBackground(SmartEditor.showBackPick);
         ta.setForeground(SmartEditor.showColorPick);
-        ta.getInputMap().clear();
-        ta.getInputMap().put(KeyStroke.getKeyStroke("ctrl-a"), "select-all");
-        ta.getInputMap().put(KeyStroke.getKeyStroke("alt-del"), "delete-word");
-        ta.getInputMap().put(KeyStroke.getKeyStroke("ctrl-z"), "undo");
-        ta.getInputMap().put(KeyStroke.getKeyStroke("tab"), "tab-insert");
-        ta.getInputMap().put(KeyStroke.getKeyStroke("ctrl-q"), "quit");
         ta.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
                 if(e.isPopupTrigger() && ta.getSelectedText() != null && !ta.getSelectedText().isEmpty() && ta.getSelectedText().contains(" ")){
                     int caretPosition = ta.getCaretPosition();
                     JPopupMenu jpm = new JPopupMenu();
-                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String[] insertPhoneme = {"Insert Phoneme Onto Text"};
+                    JList phoneme = new JList<>(insertPhoneme);
+                    phoneme.setBorder(BorderFactory.createEmptyBorder(0, 2, 5, 2));
+                    phoneme.setFocusable(true);
                     String phonemeStri = getStringPhoneme(ta.getSelectedText());
+                    phoneme.addListSelectionListener(e2 -> {
+                        String insert2 = "("+ phonemeStri + ")" + ta.getSelectedText();
+                        ta.replaceSelection("");
+                        try {
+                            ta.getDocument().insertString( ta.getCaretPosition(),insert2,null);
+                        } catch (BadLocationException ex) {
+                            ex.printStackTrace();
+                        }
+                        jpm.setVisible(false);
+                    });
                     JLabel hoverPhoneme = new JLabel(phonemeStri);
                     jpm.add(hoverPhoneme);
                     jpm.add(phoneme);
@@ -889,8 +1017,12 @@ class Frame {
                 }else if(e.isPopupTrigger() && !ta.getSelectedText().contains(" ")){
                     JPopupMenu jpm = new JPopupMenu();
                     jpm.setFocusable(true);
-                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String[] insertPhoneme = {"Insert Phoneme Onto Text"};
+                    JList phoneme = new JList<>(insertPhoneme);
+                    phoneme.setBorder(BorderFactory.createEmptyBorder(0, 2, 5, 2));
+                    phoneme.setFocusable(true);
                     String phonemeStri = getStringPhoneme(ta.getSelectedText().toLowerCase());
+                    JLabel hoverPhoneme = new JLabel(phonemeStri);
                     ArrayList<String> wordList = new ArrayList<>();
                     try {
                         wordList = getBestChoiceWord(ta.getSelectedText().toLowerCase());
@@ -912,8 +1044,19 @@ class Frame {
                         } catch (BadLocationException ignored) {
                         }
                     });
+
+                    phoneme.addListSelectionListener(e2 -> {
+                        String insert2 = "("+ phonemeStri + ")" + ta.getSelectedText();
+                        System.out.println(insert2);
+                        ta.replaceSelection("");
+                        try {
+                            ta.getDocument().insertString( ta.getCaretPosition(),insert2,null);
+                        } catch (BadLocationException ex) {
+                            ex.printStackTrace();
+                        }
+                        jpm.setVisible(false);
+                    });
                     jpm.add(listComp);
-                    JLabel hoverPhoneme = new JLabel(phonemeStri);
                     jpm.add(hoverPhoneme);
                     jpm.add(phoneme);
                     jpm.show(e.getComponent(), e.getX(), e.getY());
@@ -925,8 +1068,22 @@ class Frame {
                 if(me.isPopupTrigger() && ta.getSelectedText() != null && !ta.getSelectedText().isEmpty() && ta.getSelectedText().contains(" ")){
                     int caretPosition = ta.getCaretPosition();
                     JPopupMenu jpm = new JPopupMenu();
-                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String[] insertPhoneme = {"Insert Phoneme Onto Text"};
+                    JList phoneme = new JList<>(insertPhoneme);
+                    phoneme.setBorder(BorderFactory.createEmptyBorder(0, 2, 5, 2));
+                    phoneme.setFocusable(true);
                     String phonemeStri = getStringPhoneme(ta.getSelectedText());
+                    phoneme.addListSelectionListener(e2 -> {
+                        String insert2 = "("+ phonemeStri + ")" + ta.getSelectedText();
+                        System.out.println(insert2);
+                        ta.replaceSelection("");
+                        try {
+                            ta.getDocument().insertString( ta.getCaretPosition(),insert2,null);
+                        } catch (BadLocationException ex) {
+                            ex.printStackTrace();
+                        }
+                        jpm.setVisible(false);
+                    });
                     JLabel hoverPhoneme = new JLabel(phonemeStri);
                     jpm.add(hoverPhoneme);
                     jpm.add(phoneme);
@@ -934,8 +1091,12 @@ class Frame {
                 }else if(me.isPopupTrigger() && !ta.getSelectedText().contains(" ")){
                     JPopupMenu jpm = new JPopupMenu();
                     jpm.setFocusable(true);
-                    JMenuItem phoneme = new JMenuItem("Insert Phoneme Onto Text");
+                    String[] insertPhoneme = {"Insert Phoneme Onto Text"};
+                    JList phoneme = new JList<>(insertPhoneme);
+                    phoneme.setBorder(BorderFactory.createEmptyBorder(0, 2, 5, 2));
+                    phoneme.setFocusable(true);
                     String phonemeStri = getStringPhoneme(ta.getSelectedText().toLowerCase());
+                    JLabel hoverPhoneme = new JLabel(phonemeStri);
                     ArrayList<String> wordList = new ArrayList<>();
                     try {
                         wordList = getBestChoiceWord(ta.getSelectedText().toLowerCase());
@@ -957,8 +1118,19 @@ class Frame {
                         } catch (BadLocationException ignored) {
                         }
                     });
+
+                    phoneme.addListSelectionListener(e2 -> {
+                        String insert2 = "("+ phonemeStri + ")" + ta.getSelectedText();
+                        System.out.println(insert2);
+                        ta.replaceSelection("");
+                        try {
+                            ta.getDocument().insertString( ta.getCaretPosition(),insert2,null);
+                        } catch (BadLocationException ex) {
+                            ex.printStackTrace();
+                        }
+                        jpm.setVisible(false);
+                    });
                     jpm.add(listComp);
-                    JLabel hoverPhoneme = new JLabel(phonemeStri);
                     jpm.add(hoverPhoneme);
                     jpm.add(phoneme);
                     jpm.show(me.getComponent(), me.getX(), me.getY());
@@ -1000,6 +1172,7 @@ class Frame {
             filepath = null;
         }
 
+        ta.setText(setText);
         ta.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -1112,7 +1285,6 @@ class Frame {
                 }
             }
         });
-        ta.setText(setText);
         try {
             changeTheme(SmartEditor.defaultButtonSelected);
         } catch (Exception ignored) {
@@ -1121,19 +1293,62 @@ class Frame {
     }
 
     public static String getStringPhoneme(String taText){
-        return "phoneme here";
+        String[][] phoneme = {
+                {"a", "ah-"}, {"b", "bu-"}, {"c", "k-", "ss-"},
+                {"d", "de-"}, {"e", "ee-"}, {"f", "ff-"},
+                {"g", "ge-"}, {"h", "hh-"}, {"i", "ii-"},
+                {"j", "ju-"}, {"k", "ka-"}, {"l","le-"},
+                {"m", "me-"}, {"n", "ne-"}, {"o","ow-"},
+                {"p", "peh-"}, {"q", "qu-"}, {"r", "reh-"},
+                {"s", "ss-"}, {"t", "tuh-"}, {"u", "uh-"},
+                {"v", "vv-"}, {"w", "wuh-"}, {"x", "cxh-"},
+                {"y", "e-", "yeh-"}, {"z", "zz-"}
+        };
+        char[] alphabet = {'a','b','c','d','e','f',
+                'g','h','i','j','k','l','m','n','o','p',
+                'q','r','s','t','u','v','w','x','y','z'};
+        char[] taChar = taText.toCharArray();
+        String returned = "";
+        int indexer = 0;
+        int indexer2 = 0;
+        for(char x : taChar){
+            for(char y : alphabet) {
+                if(y == x && x == 'c'){
+                    if(taChar.length >= indexer + 2){
+                        if(taChar[indexer + 1] == 'e' || taChar[indexer + 1] == 'i' || taChar[indexer + 1] == 'y'){
+                            returned += "ss-";
+                        }else{
+                            returned += "k-";
+                        }
+                    }
+                }else if(y == x && x == 'y'){
+                    if(indexer >= 1){
+                        if(taChar[indexer - 1] == 'l'){
+                            returned += "e-";
+                        }else{
+                            returned += "yeh-";
+                        }
+                    }else{
+                        returned += "yeh-";
+                    }
+                }else if (y == x) {
+                    returned += phoneme[indexer2][1];
+                }
+                indexer2++;
+            }
+            indexer2 = 0;
+            indexer++;
+        }
+        returned = returned.substring(0, returned.length() - 1);
+        return returned;
     }
 
     public static ArrayList<String> getBestChoiceWord(String word) throws URISyntaxException {
         int correct = 0;
         ArrayList<String> listed = new ArrayList<>();
-        File file = new File(new File(SmartEditor.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath() + File.separator + "words.txt");
+        BufferedReader readers = new BufferedReader(new InputStreamReader(SmartEditor.class.getResourceAsStream("words.txt")));
         Scanner reader = null;
-        try {
-            reader = new Scanner(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
+        reader = new Scanner(readers);
         while(reader.hasNext()){
             double percent;
             String compareToThis = reader.nextLine();
@@ -1172,7 +1387,6 @@ class Frame {
                 break;
             }
         }
-
         return listed;
     }
 }
