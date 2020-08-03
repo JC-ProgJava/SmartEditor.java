@@ -1,0 +1,261 @@
+Version 1.8 07082020:
+
+    New In This Version:
+        New:
+            - Improved Check For Updates function UI.
+            - Added Changelog to menubar
+            - Shifted/reorganised settings and menuitems.
+            - Improved text completion suggestions and accuracy.
+            - Resized settings pane so that button text is fully visible.
+            - Tool tip text for assistance on settings.
+            - Default font now Oxygen.
+
+Version 1.7 23072020:
+
+    New In This Version:
+        New:
+            - Insert phoneme function fully functional.
+            - Cleaned up archive and reduced file to 5.27MB
+
+        - Fixes (6)
+            - 00021 -> Issue where update feature reminds user
+                       to update even when they are on the current version.
+            - 00022 -> Fixed issue where user may exit file they were
+                       working on without save dialog showing.
+            - 00023 -> Fixed issue where text completion is not
+                       available for jar running SmartEditor.
+            - #13 -> Open Recents.
+                     Open recent function ->
+                        Save filepaths to settings.txt
+                        in user default directory.
+            - #14 -> Pronunciation Guide
+                     Pronunciation guide(double click, or phonetic guide text)
+                     English
+                     -> Put Phonemes for each word.
+            - #16 -> Phoneme Function SPRINT
+                      - words with 'y' or 'c' show multiple times on
+                        phoneme dialog.
+                      - The "insert phoneme function" does not work.
+
+
+Version 1.6 19072020:
+
+    New In This Version:
+        New:
+            - Removed compatibility with MacOS Application due to delay in
+              fixing issues.
+            - Text Completion BETA OUT.
+            - Phoneme renderer English version out.
+
+        - Fixes (3)
+            - 00018 -> Update.jar now is fully compatible with Java Archive
+                       version. Fixed issue where launcher wouldn't launch
+                       jar file.
+            - 00019 -> SmartEditor archive executable now can save currently
+                       worked on docs and reopen after user updates with
+                       update feature.
+            - 00020 -> Fixed issue where unsaved text from before clicking
+                       the update button will not render because of order
+                       frame was setup in.
+
+
+Version 1.5 13072020:
+
+    New In This Version:
+        New:
+            - Bugs are all imported into database on Github Repository.
+              All bug reference numbers will now match accordingly.
+              Undocumented bugs will be expressed in five digits(e.g., 00014)
+            - Chinese Simplified and Traditional support with Arial Unicode MS.
+            - Multilingual font support with Noto Sans & Noto Serif.
+            - Default font is now Noto Sans.
+            - Nimbus LAF is now the default theme.
+            - Text Completion ALPHA OUT.
+        - Fixes (8)
+            - #4 -> Improve saving function symbol.
+            - #6 -> Check For Updates Function
+                    - After clicking "Don't Remind Me", you can still update by
+                      finding "Check for updates" in the menu.
+            - #7 -> New Option to Save on Close in settings.
+            - #10 -> File Converter
+            - #11 -> Text Completion ALPHA OUT.
+            - 00015 -> Application path doesn't update in text file
+                       -> Key to auto update feature.
+            - 00016 -> Windows does not have a way to access popup menu.
+                       Possibly because action performed is for linux.
+                       Check on "@Override" annotation marked on dialog
+                       (ta.getDocument().addMouseListener.)
+            - 00017 -> Save dialog shows even though title shows
+                       is saved(type hello and delete, then close)
+
+
+Version 1.4 09072020:
+
+    New In This Version:
+        - New
+        - Find Selection option now available.
+        - Fixes (4)
+            - 00011 -> Fixed Find and Replace issue
+                       - search always selects length of find word at the
+                         top of the page
+            - 00012 -> Fixed Find and Replace dialog
+                       to not freeze on deleting a character
+            - 00013 -> Fixed "Find and Replace starts not on first
+                       occurrence" issue
+            - 00014 -> Fixed "User changes document but find &
+                       replace doesn't update." issue
+
+
+Version 1.3 07072020:
+
+    - Bugs Identified:
+        Themes:
+            - PGS theme cut, copy and paste functions duplicate copy text
+              because PGS has custom paste functions
+        Components:
+            TextArea:
+                - Emoji icons do not work
+            TabbedPane:
+                - Add shortcuts for navigation(tabbed panes key bindings)
+                - Tabbed panes do not open multiple, always only one. (Sprint: 1.5)
+                - Saving asterisk shown when unsaved shows file is unsaved
+                  when user types and deletes or deletes and types same character
+                  (does not recognize that file didn't really change
+                  when user typed and deleted words)
+        Find & Replace:
+            - Find and replace starts not on first occurrence
+            - Find and Replace issue
+                - File search "**********" directs to top of page
+                - after searching once, replacing the text freezes program.
+
+    - New Features Coming:
+        - Method to "Check for updates" and update by downloading newer version.
+        - Choose whether text should be saved in plain text or rich text
+          and how to implement(show and edit) in the window.
+        - Option to choose whether file saves automatically before
+          program closes.
+        - Project structure/path display
+        - Tabbed panes for different files. (make sure user can access tabs
+          using key bindings command+tab-number)
+        - PDF creator.
+        - Text completion ~ @textCompletionConcept.java
+            - On selecting(double clicking text and two finger clicking)
+              check for spelling mistakes in word
+            - Highlight/underline words misspelled with checker
+              every 5 character changes.
+        - Make executable file(.dmg, .exe) for multi-platform use
+          without JDK, etc.
+        - Run Java and .txt(java) files
+            - With compile
+            - Without compile
+            - Create folder with compile and source
+                - Delete previous version
+
+    New In This Version:
+    - Find and Replace
+        - New "Find Previous" function added.
+    - Rename file feature added to menu (Menu -> Rename).
+    - Text completion Scheduled
+        - Alpha (Sprint: 2.0)
+        - Beta (Sprint: 2.4)
+        - Implemented (Sprint: 3.0)
+    - Fixes (7)
+        - 00004 -> Fixed issue where file opened has a blank first line.
+        - 00005 -> Fixed Find and Replace so selection does not repeat
+                   on single occurrence.
+        - 00006 -> Fixed file doesn't save when user opens another
+                   file in same tab.
+        - 00007 -> Setting metal P.L.A.F. as default may give
+                   ocean theme instead of default-metal.
+        - 00008 -> File is erased when user reopens
+                   same file(unsaved).
+        - 00009 -> Issue where user needs to save file(shows file dialog) when opening
+                   from a blank file.
+        - 00010 -> Issue where user saves file after unsaved prompt and
+                   doesn't see frame(setVisible is false).
+
+
+Version 1.2 04072020:
+    - Introducing tabbed panes
+        - for multiple windows (Sprint: 1.5)
+        - Key bindings support (Sprint: 1.5)
+    - Auto-save setting is available
+    - MacOS Application available.
+
+Version 1.1 02072020:
+    - Find and Replace function fully functional.
+        - Option to replace all added.
+        - Fixed issue where one occurrence is skipped.
+    - Cut, copy and paste functions are now fully functional.
+
+Version 1.0 23062020:
+    - Combined all of the following.
+
+Version 0.6 20062020:
+    - Bug fixes and patches
+    - Theme now can be set as default.
+        - Themes instantly take effect when radio button clicked.
+        - Themes are shown in a JList format as there are 19 themes.
+        - More themes, below shown:
+            - Metal (2)
+                - Metal
+                - Ocean
+            - JTattoo (12)
+                - Acryl
+                - Aero
+                - Aluminium
+                - Bernstein
+                - Fast
+                - HiFi
+                - McWin
+                - Mint
+                - Noire
+                - Smart
+                - Luna (similar to Smart)
+                - Texture
+            - Original (system)
+            - Nimbus
+            - Motif
+            - PGS (PagoSoft)
+
+Version 0.5 18062020:
+    - Cut, copy and paste functions are also available on the menu bar from "Edit".
+    - Reduced Java Archive size to 2.65MB
+    - Bug fixes and patches.
+
+Version 0.4 14062020:
+    - Added support for different characters and languages
+        - Chinese, English
+        - All unicode characters
+    - Improved order of menu items for ease of use
+    - Key bindings
+        - Ctrl-A -> Select All
+        - Alt-Del -> Delete word
+        - Ctrl-X -> Cut
+        - Ctrl-V -> Paste
+        - Ctrl-C -> Copy
+        - Ctrl-Q -> Quit
+        - Ctrl-Z -> Undo
+        - Tab -> Insert Tab
+
+Version 0.3 14062020:
+    - Save and open settings added and fully functional.
+    - Resized settings frame to fit "set as default" button.
+    - Added scroll bar to frame for better navigation.
+    - Fixes (3):
+        - 00001 -> Exiting frame is laggy and slow, throws NullPointerException
+        - 00002 -> File path issue where jar execution throws Exception
+        - 00003 -> Default text file not savable in jar
+                - Folder in users' default directory will be created named
+                  "SmartEditor" with default settings file in it.
+
+Version 0.2 13062020:
+    - "Set as Default" for font family, size and background, foreground colors.
+    - Implemented change listeners to see instant effect of changing font, etc.
+    - Implemented color palette for choosing colors from Swatches, RGB, CMYK, et al.
+    - Renamed frame to say "Untitled.txt".
+
+Version 0.1 13062020:
+    - Frame set-up
+    - JMenuBar with settings, save and open settings.
+    - Overall structure of frame Complete
