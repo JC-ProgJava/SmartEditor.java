@@ -1,14 +1,19 @@
-Version 1.8 07082020:
+Version 1.8 14082020:
 
     New In This Version:
         New:
             - Improved Check For Updates function UI.
             - Added Changelog to menubar
+            - Added About to menubar
             - Shifted/reorganised settings and menuitems.
             - Improved text completion suggestions and accuracy.
             - Resized settings pane so that button text is fully visible.
             - Tool tip text for assistance on settings.
-            - Default font now Oxygen.
+            - Default font now Noto Sans Regular.
+            - Added undo and redo functions to menu and key bindings.
+                - binded to:
+                    Undo: Ctrl-Z
+                    Redo: Ctrl-R
 
 Version 1.7 23072020:
 
