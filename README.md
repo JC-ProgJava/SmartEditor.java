@@ -52,8 +52,8 @@ A powerful find & replace for enhanced editing
 ![15+ Themes for better Interface](https://github.com/JC-ProgJava/SmartEditor.java/blob/master/Demo/d5.png)
 
 
-Rename Files On-The-FLy
-![Rename Files On-The-FLy](https://github.com/JC-ProgJava/SmartEditor.java/blob/master/Demo/d6.png)
+Rename Files On-The-Fly
+![Rename Files On-The-Fly](https://github.com/JC-ProgJava/SmartEditor.java/blob/master/Demo/d6.png)
 
 
 Startup Appearance: 
