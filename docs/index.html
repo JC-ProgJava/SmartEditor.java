@@ -8,10 +8,6 @@
 	<meta NAME="viewport" CONTENT="width=device-width, initial-scale=1.0"> 
         <title>SmartEditor</title>
         <style>
-            body{
-                text-align: center;
-            }
-
             :root {
                 --main-font-color: black;
                 --main-back-color: white;
@@ -84,19 +80,20 @@
                 color: rgb(150,100,100);
             }
 
-            .dark-mode{
-				--main-font-color: white !important;
-				--main-back-color: black !important;
-				--img: url("dark.jpg");
-			}
+            	.dark-mode{
+			--main-font-color: white !important;
+			--main-back-color: black !important;
+			--img: url("dark.jpg");
+		}
 
-			body{
-				background: var(--main-back-color);
-				color: var(--main-font-color);
-				transition: var(--main-font-color), 0.7s, var(--main-back-color), 0.5s !important;
-			}
+		body {
+			text-align: center;
+			background: var(--main-back-color);
+			color: var(--main-font-color);
+			transition: var(--main-font-color), 0.7s, var(--main-back-color), 0.5s !important;
+		}
 
-            div{
+            div {
                 margin-left: 3em;
             }
 
