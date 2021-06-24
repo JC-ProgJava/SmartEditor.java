@@ -1296,6 +1296,9 @@ class Frame {
             case "Texture":
                 UIManager.setLookAndFeel("com.jtattoo.plaf.texture.TextureLookAndFeel");
                 break;
+            default:
+                System.err.println("Unexpected theme name input (void changeTheme()).");
+                break;
         }
         SwingUtilities.updateComponentTreeUI(editorFrame);
         SwingUtilities.updateComponentTreeUI(ta);
