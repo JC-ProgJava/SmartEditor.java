@@ -2,6 +2,14 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/jc-progjava/smarteditor.java/badge)](https://www.codefactor.io/repository/github/jc-progjava/smarteditor.java)
 
+### Archive Note
+```
+This repository will no longer be updated.
+- July 2022
+```
+
+### Description
+
 Public base of SmartEditor - a text editor built using Java.
 
 <a href="http://JC-ProgJava.github.io/SmartEditor.java" target="_blank">Website</a>
